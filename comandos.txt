@@ -1,0 +1,18 @@
+
+docker swarm init
+docker build -t back_base_arq ./back_base_arq
+docker build -t front_arq ./front-arq
+docker build -t postgresql ./postgresql
+
+docker stack deploy -c docker-compose.yml proyecto
+
+
+docker logs 
+
+docker stack rm proyecto
+
+docker swarm leave --force
+
+
+sasda
+

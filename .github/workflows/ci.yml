@@ -1,0 +1,80 @@
+name: Docker CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Verify Dockerfile in postgresql
+        run: |
+          if [ ! -f ./postgresql/Dockerfile ]; then
+            echo "Dockerfile not found in ./postgresql"
+            exit 1
+          fi
+
+      - name: Verify Dockerfile in back_base_arq
+        run: |
+          if [ ! -f ./back_base_arq/Dockerfile ]; then
+            echo "Dockerfile not found in ./back_base_arq"
+            exit 1
+          fi
+
+      - name: Verify Dockerfile in front-arq
+        run: |
+          if [ ! -f ./front-arq/Dockerfile ]; then
+            echo "Dockerfile not found in ./front-arq"
+            exit 1
+          fi
+
+      - name: Build Docker images
+        run: |
+          docker build -t enmarcm/test-arqsoftware:postgresql -f ./postgresql/Dockerfile ./postgresql
+          docker build -t enmarcm/test-arqsoftware:back_base_arq -f ./back_base_arq/Dockerfile ./back_base_arq
+          docker build -t enmarcm/test-arqsoftware:front_arq -f ./front-arq/Dockerfile ./front-arq
+
+      - name: Push Docker images to Docker Hub
+        run: |
+          docker push enmarcm/test-arqsoftware:postgresql-latest
+          docker push enmarcm/test-arqsoftware:back_base_arq-latest
+          docker push enmarcm/test-arqsoftware:front_arq-latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Log in to Docker Hub (for deployment)
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Initialize Docker Swarm
+        run: docker swarm init || docker swarm join --token ${{ secrets.SWARM_TOKEN }} <manager_ip>:2377
+
+      - name: Deploy stack using Docker Swarm
+        run: docker stack deploy -c docker-compose.yml my_stack
+
+      - name: Notify deployment success
+        run: echo "Deployment completed successfully!"

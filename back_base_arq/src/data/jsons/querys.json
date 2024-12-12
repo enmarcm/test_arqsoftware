@@ -1,0 +1,4 @@
+{
+    "obtenerDatos": "SELECT * FROM nombres", 
+    "ingresarDatos": "INSERT INTO nombres (pr_nombre) VALUES ($1)"
+}
