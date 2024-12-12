@@ -53,9 +53,9 @@ jobs:
 
       - name: Push Docker images to Docker Hub
         run: |
-          docker push enmarcm/test-arqsoftware:postgresql-latest
-          docker push enmarcm/test-arqsoftware:back_base_arq-latest
-          docker push enmarcm/test-arqsoftware:front_arq-latest
+          docker push enmarcm/test-arqsoftware:postgresql
+          docker push enmarcm/test-arqsoftware:back_base_arq
+          docker push enmarcm/test-arqsoftware:front_arq
 
   deploy:
     runs-on: ubuntu-latest
